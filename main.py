@@ -50,7 +50,7 @@ val_male_median = val_male_age.median()
 val_female_median = val_female_age.median()
 val_mean_age = (val_male_median + val_female_median)/2
 validation_data.Age = validation_data.Age.fillna(value = val_mean_age)
-#test_data = test_cleaned[['PassengerId', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']]
+print(validation_data.describe())
 
 #Validation Data Prediction
 validation_predict = model.predict(validation_data)
