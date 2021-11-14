@@ -1,58 +1,50 @@
 import numpy as np
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
+from sklearn.impute import SimpleImputer
 import matplotlib.pyplot as plt
 
 #Import Datasets
 train = pd.read_csv("train.csv")
 test = pd.read_csv("test.csv")
+pd.plotting.scatter_matrix(train, alpha=0.2)
+plt.show()
 
-#Training Data Processing
-train = train[['PassengerId', 'Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']]
-train_cleaned = train.dropna(axis = 0)
-train_cleaned = train_cleaned.replace(['male', 'female', 'S', 'Q', 'C'], [0, 1, 1, 2,3])
+#Selecting features
+features = ['PassengerId', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
+targets = ['Survived']
+X = train[features]
+X = X.replace(['male', 'female', 'S', 'Q', 'C'], [0, 1, 1, 2,3]) #Convert categorical data to numerical data
+y = train[targets]
 
-male_age = train_cleaned.Age[train_cleaned['Sex'] == 0]
-female_age = train_cleaned.Age[train_cleaned['Sex'] == 1]
-
-male_median = male_age.median()
-female_median = female_age.median()
-mean_age = (male_median + female_median)/2
-
-train_cleaned.Age = train_cleaned.Age.fillna(value = mean_age)
-
-X = train_cleaned[['PassengerId', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']]
-y = train_cleaned[['Survived']]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-#print(X.shape)
-#print(y.shape)
+#Training Data Preprocessing
+imputer = SimpleImputer(strategy = 'median')
+X_cleaned = pd.DataFrame(imputer.fit_transform(X))
+X_cleaned.columns = X.columns
+X_train, X_val, y_train, y_val = train_test_split(X_cleaned, y, test_size=0.2, random_state=42)
 
 #Model training
-model = DecisionTreeClassifier()
-training = model.fit(X_train, y_train)
-predict = model.predict(X_test)
-score = model.score(X_test, y_test)
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+predict = model.predict(X_val)
+score = mean_absolute_error(y_val, predict)
 print(score)
-#print(predict)
-#print(predict.shape)
 
 #Validation Data processing
-validation = test[['PassengerId', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']]
-validation.Fare.fillna(35.627188, inplace = True)
-#validation_cleaned = validation.dropna(axis = 0)
-validation_data = validation.replace(['male', 'female', 'S', 'Q', 'C'], [0, 1, 1, 2,3])
-
-val_male_age = validation_data.Age[validation_data['Sex'] == 0]
-val_female_age = validation_data.Age[validation_data['Sex'] == 1]
-
-val_male_median = val_male_age.median()
-val_female_median = val_female_age.median()
-val_mean_age = (val_male_median + val_female_median)/2
-validation_data.Age = validation_data.Age.fillna(value = val_mean_age)
-print(validation_data.describe())
+X_test = test[features]
+X_test = X_test.replace(['male', 'female', 'S', 'Q', 'C'], [0, 1, 1, 2,3])
+X_test_cleaned = pd.DataFrame(imputer.fit_transform(X_test))
+X_test_cleaned.columns = X_test.columns
 
 #Validation Data Prediction
-validation_predict = model.predict(validation_data)
-print(validation_predict)
-print(validation_predict.shape)
+output = pd.DataFrame(model.predict(X_test_cleaned))
+
+#Creating a CSV file
+output.columns = ['Survived']
+passengerID = X_test_cleaned[['PassengerId']]
+passengerID['PassengerId'] = pd.to_numeric(passengerID['PassengerId'])
+final = passengerID.join(output)
+print(final.dtypes)
+pd.DataFrame(final).to_csv(r'C:\Users\ttroc\anaconda3\envs\Kaggle_Titanic\output.csv', index = False)
