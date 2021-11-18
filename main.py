@@ -16,7 +16,7 @@ plt.show()
 features = ['PassengerId', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
 targets = ['Survived']
 X = train[features]
-X = X.replace(['male', 'female', 'S', 'Q', 'C'], [0, 1, 1, 2,3]) #Convert categorical data to numerical data
+X = X.replace(['male','female','S','Q','C'],[0, 1, 1, 2,3])#Convert categorical data to numerical data
 y = train[targets]
 
 #Training Data Preprocessing
@@ -46,5 +46,5 @@ output.columns = ['Survived']
 passengerID = X_test_cleaned[['PassengerId']]
 passengerID['PassengerId'] = pd.to_numeric(passengerID['PassengerId'])
 final = passengerID.join(output)
-print(final.dtypes)
+#print(final.dtypes)
 pd.DataFrame(final).to_csv(r'C:\Users\ttroc\anaconda3\envs\Kaggle_Titanic\output.csv', index = False)
